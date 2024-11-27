@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8d147dff73310941b29fc513aaef4af, type: 3}
   m_Name: SessionConfig
   m_EditorClassIdentifier: 
-  PlaneFindingMode: 3
+  PlaneFindingMode: 0
   ImageTrackingMode: 1
   TrackingImageDatabase: {fileID: 11400000, guid: 83048aec178834e4eb39fb63cca00c1c,
     type: 2}

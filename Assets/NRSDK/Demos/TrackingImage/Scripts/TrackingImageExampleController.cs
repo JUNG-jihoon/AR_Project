@@ -1,5 +1,5 @@
 ﻿/****************************************************************************
-* Copyright 2019 Xreal Technology Limited. All rights reserved.
+* Copyright 2019 Xreal Techonology Limited. All rights reserved.
 *                                                                                                                                                          
 * This file is part of NRSDK.                                                                                                          
 *                                                                                                                                                           
@@ -46,21 +46,13 @@ namespace NRKernal.NRExamples
             // have a visualizer. Remove visualizers for stopped images.
             foreach (var image in m_TempTrackingImages)
             {
-                // 기존에 생성된 모든 visualizer를 제거
-                ClearExistingVisualizers();
-
                 TrackingImageVisualizer visualizer = null;
                 m_Visualizers.TryGetValue(image.GetDataBaseIndex(), out visualizer);
                 if (image.GetTrackingState() != TrackingState.Stopped && visualizer == null)
                 {
                     NRDebugger.Info("Create new TrackingImageVisualizer!");
-                    // 오브젝트를 생성할 때 회전 값을 보정하여 올바르게 보이도록 조정합니다.
-                    visualizer = (TrackingImageVisualizer)Instantiate(
-                        TrackingImageVisualizerPrefab,
-                        image.GetCenterPose().position,
-                        image.GetCenterPose().rotation * Quaternion.Euler(0, 0, 0) // 필요에 따라 회전값을 조정합니다.
-                    );
-
+                    // Create an anchor to ensure that NRSDK keeps tracking this augmented image.
+                    visualizer = (TrackingImageVisualizer)Instantiate(TrackingImageVisualizerPrefab, image.GetCenterPose().position, image.GetCenterPose().rotation);
                     visualizer.Image = image;
                     visualizer.transform.parent = transform;
                     m_Visualizers.Add(image.GetDataBaseIndex(), visualizer);
@@ -73,18 +65,6 @@ namespace NRKernal.NRExamples
 
                 FitToScanOverlay.SetActive(false);
             }
-        }
-
-        /// <summary>
-        /// 기존에 생성된 모든 visualizer를 제거하는 함수.
-        /// </summary>
-        private void ClearExistingVisualizers()
-        {
-            foreach (var visualizer in m_Visualizers.Values)
-            {
-                Destroy(visualizer.gameObject);
-            }
-            m_Visualizers.Clear();
         }
 
         /// <summary> Enables the image tracking. </summary>

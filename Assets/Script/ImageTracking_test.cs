@@ -1,17 +1,24 @@
 namespace NRKernal.NRExamples
 {
+    using System.Collections;
     using System.Collections.Generic;
-    using UnityEngine;
     using TMPro;
+    using UnityEngine;
 
     /// <summary> Controller for TrackingImage example. </summary>
     [HelpURL("https://developer.xreal.com/develop/unity/image-tracking")]
-    public class ImageTracking_test : MonoBehaviour
+    public class ImageTracking_ING : MonoBehaviour
     {
-        public GameObject TrackingImageVisualizerPrefab;
+
         public GameObject FitToScanOverlay;
         public GameObject PrefabForImage1;
         public GameObject PrefabForImage2;
+        public GameObject PrefabForImage3;
+        public GameObject PrefabForImage4;
+        public GameObject PrefabForImage5;
+        public GameObject PrefabForImage6;
+        public GameObject PrefabForImage7;
+        public GameObject PrefabFordefault;
         public TextMeshProUGUI debugText;
 
         // Dictionary to keep track of instantiated objects by their image index
@@ -28,43 +35,46 @@ namespace NRKernal.NRExamples
 
             NRFrame.GetTrackables<NRTrackableImage>(m_TempTrackingImages, NRTrackableQueryFilter.New);
 
-            // 새로운 이미지가 탐지되면 기존 오브젝트를 모두 삭제합니다.
+            // Clear all visualizers only if there are no tracked images detected
             if (m_TempTrackingImages.Count > 0)
             {
                 ClearAllVisualizers();
+
             }
 
-            // Check the tracking state of current images and manage the visualizers accordingly
             foreach (var image in m_TempTrackingImages)
             {
                 var imageIndex = image.GetDataBaseIndex();
                 var trackingState = image.GetTrackingState();
                 LogDebugMessage($"Processing image index: {imageIndex}, Tracking State: {trackingState}");
 
-                // Create a new visualizer for the detected image
-                GameObject prefabToInstantiate = GetPrefabForImage(imageIndex);
-                LogDebugMessage($"Creating new object for image index: {imageIndex} with prefab: {prefabToInstantiate.name}");
-
-                // Set a fixed rotation (0, 0, 0) to keep the object upright
-                Quaternion fixedRotation = Quaternion.Euler(0, 0, 0); // 고정된 회전값
-                Vector3 imagePosition = image.GetCenterPose().position; // 트래킹된 이미지의 위치는 그대로 사용
-
-                // Instantiate the object    at the tracked position but with fixed rotation
-                GameObject instantiatedObject = Instantiate(prefabToInstantiate, imagePosition, fixedRotation);
-
-                if (instantiatedObject == null)
+                // Create a new visualizer only if it doesn't exist yet
+                if (!m_Visualizers.ContainsKey(imageIndex))
                 {
-                    LogDebugMessage($"Failed to instantiate object for image index: {imageIndex}");
-                    continue;
+                    GameObject prefabToInstantiate = GetPrefabForImage(imageIndex);
+                    Pose imagePose = image.GetCenterPose();
+                    Vector3 imagePosition = imagePose.position;
+
+                    // Initial rotation (using Y-axis rotation only)
+                    Quaternion yOnlyRotation = Quaternion.Euler(0, imagePose.rotation.eulerAngles.y, 0);
+
+                    // Instantiate and add to dictionary
+                    GameObject instantiatedObject = Instantiate(prefabToInstantiate, imagePosition, yOnlyRotation);
+                    instantiatedObject.transform.SetParent(transform, true);
+                    m_Visualizers.Add(imageIndex, instantiatedObject);
+                    LogDebugMessage($"Object created and added for image index: {imageIndex}");
+                    FitToScanOverlay.SetActive(false);
                 }
 
-                instantiatedObject.transform.SetParent(transform, true); // Ensure it is parented correctly
-
-                // Add the new object to the dictionary
-                m_Visualizers.Add(imageIndex, instantiatedObject);
-                LogDebugMessage($"Object created and added for image index: {imageIndex}");
-
-                FitToScanOverlay.SetActive(false);
+                // Update rotation to match the camera's Y-axis rotation
+                if (m_Visualizers.TryGetValue(imageIndex, out GameObject visualizerObject))
+                {
+                    Quaternion cameraRotation = Camera.main.transform.rotation;
+                    float cameraYRotation = cameraRotation.eulerAngles.y;
+                    Quaternion newRotation = Quaternion.Euler(0, cameraYRotation, 0);
+                    visualizerObject.transform.rotation = newRotation;
+                    LogDebugMessage($"Updated rotation for image index: {imageIndex} to match camera's Y rotation: {cameraYRotation}");
+                }
             }
         }
 
@@ -93,8 +103,18 @@ namespace NRKernal.NRExamples
                     return PrefabForImage1;
                 case 1:
                     return PrefabForImage2;
+                case 2:
+                    return PrefabForImage3;
+                case 3:
+                    return PrefabForImage4;
+                case 4:
+                    return PrefabForImage5;
+                case 5:
+                    return PrefabForImage6;
+                case 6:
+                    return PrefabForImage7;
                 default:
-                    return TrackingImageVisualizerPrefab;
+                    return PrefabFordefault;
             }
         }
 
@@ -125,5 +145,25 @@ namespace NRKernal.NRExamples
                 debugText.text += message + "\n"; // Append new message to the existing text
             }
         }
+        private void ClearMessage()
+        {
+            if (debugText != null)
+            {
+                debugText.text = null; // Append new message to the existing text
+            }
+        }
+
+
+        public void ForceResetTrackingSession()
+        {
+            NRSessionManager.Instance.TrackableFactory.ResetTrackables();
+            ClearMessage();
+            LogDebugMessage("Force reset of tracking session with explicit resume and recenter.");
+        }
+
+
+
+
+
     }
 }

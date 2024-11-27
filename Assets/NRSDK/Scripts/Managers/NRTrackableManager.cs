@@ -240,5 +240,35 @@ namespace NRKernal
             NRFrame.DestroySubsystem<NRPlaneSubsystemDescriptor, NRPlaneSubsystem>(NRPlaneSubsystemDescriptor.Name);
             NRFrame.DestroySubsystem<NRTrackableImageSubsystemDescriptor, NRTrackableImageSubsystem>(NRTrackableImageSubsystemDescriptor.Name);
         }
+
+        public void ResetTrackables()
+        {
+            // 트래킹된 데이터 초기화
+            m_TrackableDict.Clear();
+            m_TrackableTypeDict.Clear();
+            m_AllTrackables.Clear();
+            m_NewTrackables.Clear();
+            m_OldTrackables.Clear();
+
+            // 서브시스템 재시작
+            if (TrackableSubsystem != null)
+            {
+                TrackableSubsystem.Destroy();
+                TrackableSubsystem.Start();
+            }
+
+            if (PlaneSubsystem != null)
+            {
+                PlaneSubsystem.Destroy();
+                PlaneSubsystem.Start();
+            }
+
+            if (TrackableImageSubsystem != null)
+            {
+                TrackableImageSubsystem.Destroy();
+                TrackableImageSubsystem.Start();
+            }
+
+        }
     }
 }
